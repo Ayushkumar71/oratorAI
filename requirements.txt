@@ -1,10 +1,8 @@
-tensorflow==2.16.2
+tensorflow
 opencv-python
 streamlit
 h5py
 onnxruntime  # If you plan to use ONNX
-tensorflow-macos  # If you're using Apple Silicon (M1/M2)
-tensorflow-metal  # If you're using GPU acceleration with Metal
 scikit-learn  # For general machine learning tasks if used in your project
 pillow  # For image handling in case of image preprocessing
 numpy  # Essential for tensor and numerical operations
