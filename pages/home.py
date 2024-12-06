@@ -20,9 +20,6 @@ def home():
     if st.button("Toggle Video"):
         st.session_state.video_visible = not st.session_state.video_visible
 
-    # Debugging state
-    st.write(f"Video Visible: {st.session_state.video_visible}")
-
     # Display video if the toggle is on
     if st.session_state.video_visible:
         st.write("Facecam is ON")
@@ -31,16 +28,12 @@ def home():
         st.write("Video is currently hidden. Click the button to view it.")
 
 
-frame_times = []  # Store the timestamps of captured frames
 
-# Not in use anywhere - using explicitly set 7 fps
-def get_actual_fps():
-    """Calculate the actual FPS based on timestamps of captured frames."""
-    if len(frame_times) > 1:
-        intervals = [t2 - t1 for t1, t2 in zip(frame_times[:-1], frame_times[1:])]
-        average_interval = sum(intervals) / len(intervals)
-        return 1.0 / average_interval if average_interval > 0 else 10.0
-    return 30.0  # Fallback value
+
+
+
+
+# Helper functions
 
 def initialize_face_cascade():
     """
@@ -49,6 +42,8 @@ def initialize_face_cascade():
         haar_cascade (cv2.CascadeClassifier): The pre-trained face detection model.
     """
     return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+
 
 def detect_faces(frame, haar_cascade):
     """
@@ -76,6 +71,8 @@ def detect_faces(frame, haar_cascade):
 
     return frame, largest_face
 
+
+
 def display_frame(frame, frame_placeholder):
     """
     Display the processed frame in the Streamlit placeholder.
@@ -86,6 +83,8 @@ def display_frame(frame, frame_placeholder):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert from BGR to RGB
     frame = cv2.flip(frame, 1)  # Flip frame horizontally (mirror)
     frame_placeholder.image(frame, channels="RGB")  # Display in the placeholder
+
+
 
 def record_audio(filename):
     """ Record audio from the microphone and save to a file. """
@@ -113,6 +112,8 @@ def record_audio(filename):
         wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
         wf.setframerate(44100)
         wf.writeframes(b''.join(frames))
+
+
 
 def run_facecam():
     """
@@ -148,10 +149,6 @@ def run_facecam():
                 st.session_state.audio_thread.join()  # Ensure the audio thread finishes
             st.success("Recording stopped. Traverse to the result page from the sidebar")
             
-            # Navigation to results page 
-            if st.button("Head to results page"):
-                st.session_state["page"] = "results"
-                st.stop()  # Trigger a stop and re-execute the script
         else:
             # Start recording
             st.session_state.recording = True
@@ -209,6 +206,7 @@ def run_facecam():
     cap.release()
     cv2.destroyAllWindows()
     frame_placeholder.empty()  # Clear the placeholder after stopping the feed
+
 
 
 # Run the app if this file is executed

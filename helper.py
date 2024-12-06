@@ -9,7 +9,7 @@ import streamlit as st
 import tensorflow as tf
 
 # Load the model
-model = tf.keras.models.load_model('models/TedEmotion_model.keras')
+model = tf.keras.models.load_model('/Users/ayush/Documents/Stuff/ML Boi/Project/oratorAI/final/models/best_model_2.keras')
 
 # Initialize recognizer
 r = sr.Recognizer()
@@ -22,11 +22,8 @@ filler_words = [
 ]
 
 # Class indices as per your train_generator
-class_indices = {'angry': 0, 'disgust': 1, 'fear': 2, 'happy': 3, 'neutral': 4, 
-                 'sad': 5, 'surprise': 6}
-
-# Reverse the class indices for decoding predictions
-class_labels = {v: k for k, v in class_indices.items()}
+class_indices = {0: 'angry', 1: 'disgust', 2: 'fear', 3: 'happy', 4: 'neutral', 
+                 5: 'sad',6: 'surprise',-1: 'others'}
 
 
 # Dummy function for transcript extraction - will be implemented in next push
@@ -40,6 +37,8 @@ def extract_transcript(audiofile_path):
     """
     # TODO: Implement actual audio-to-text logic later - Thinking of leaving this part of project @@
     return 
+
+
 
 def extract_audio_and_duration(audiofile_path):
 # Dummy function for Speech analysis
@@ -126,8 +125,8 @@ def extract_snapshots_for_sentiment(video_path):
         # Crop the face region from the full frame
         face_region = frame[y:y+h, x:x+w]
 
-        # Display the face region on Streamlit UI
-        # st.image(cv2.cvtColor(face_region, cv2.COLOR_BGR2RGB), caption=f"Face at {round(frame_time, 2)}s", use_column_width=True)
+
+    
 
         # Resize the face region to 48x48
         resized_face = cv2.resize(face_region, (48, 48))
@@ -135,18 +134,38 @@ def extract_snapshots_for_sentiment(video_path):
         # Convert the resized face to grayscale (1 channel)
         gray_face = cv2.cvtColor(resized_face, cv2.COLOR_BGR2GRAY)
         
+        # For testing - visualing face
+        # st.image(gray_face, caption="Processed Face (Grayscale)", use_container_width=True)
+
         # Normalize the resized face
         normalized_face = gray_face / 255.0  # Normalize pixel values
         input_face = np.expand_dims(normalized_face, axis=(0, -1))  # Add batch and channel dimensions
         
+        
+
         # Predict the raw emotion probabilities for the cropped face
         predictions = model.predict(input_face)[0]  # Extract predictions for the single frame
-        
-        # Map raw predictions to class labels (no normalization applied)
-        prediction_dict = {class_labels[i]: float(pred) for i, pred in enumerate(predictions)}
 
-        # Store the raw result
-        analysis_results[round(frame_time, 2)] = prediction_dict
+        # Extracting top 2 indices
+        top_2_indices = np.argsort(predictions)[-2:]
+
+        # Dictionary with scores of top 2 emotions with their index
+        sortedPred = {}
+        for index in top_2_indices:
+            sortedPred[index] = predictions[index]
+        
+        # Append the sum of remaining values (rest of the emotions)
+        sortedPred[-1] = 1 - sum(sortedPred.values())
+
+        # Encoding the values with the emotion name
+        sortedPred = {class_indices[key]: value for key,value in sortedPred.items()}
+
+        # Normalize the values to avoid floating point errors
+        total = sum(sortedPred.values())
+        normalizedPred = {key: round(value / total, 3) for key, value in sortedPred.items()}
+
+        # Store the result for the current frame in the big dictionary
+        analysis_results[round(frame_time, 2)] = normalizedPred
 
     # Release video capture
     cap.release()
@@ -177,46 +196,3 @@ def detect_largest_face(frame):
     largest_face = max(faces, key=lambda face: face[2] * face[3])  # face[2] = width, face[3] = height
 
     return largest_face  # (x, y, w, h)
-
-
-
-
-def predict_emotion_from_image(image_path):
-    """
-    Load the image, preprocess it, and predict the emotion using the trained model.
-    Args:
-        image_path (str): Path to the image file (e.g., 'temp/happy.jpg').
-    Returns:
-        dict: Dictionary with emotions as keys and predicted values as values.
-    """
-    # Load image
-    img = cv2.imread(image_path)
-    
-    if img is None:
-        raise ValueError(f"Could not load image from {image_path}")
-    
-    # Resize the image to 48x48 (the input size for your model)
-    resized_img = cv2.resize(img, (48, 48))
-    
-    # Convert the image to grayscale (if your model expects grayscale input)
-    gray_img = cv2.cvtColor(resized_img, cv2.COLOR_BGR2GRAY)
-    
-    # Normalize pixel values to [0, 1]
-    normalized_img = gray_img / 255.0
-    
-    # Add batch and channel dimensions
-    input_img = np.expand_dims(normalized_img, axis=(0, -1))  # (1, 48, 48, 1)
-
-    # Predict the emotion using the loaded model
-    predictions = model.predict(input_img)[0]  # Get the first (and only) prediction
-    
-    # Map predictions to class labels
-    prediction_dict = {class_labels[i]: float(pred) for i, pred in enumerate(predictions)}
-    
-    # Display image and prediction
-    st.image(cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB), caption="Predicted Image", use_column_width=True)
-    
-    # Display the raw prediction
-    st.write("Prediction:", prediction_dict)
-    
-    return prediction_dict
