@@ -1,12 +1,9 @@
 import streamlit as st
 import cv2
 import os
-import pyaudio
+import sounddevice as sd
 import wave
 from threading import Thread
-
-# Will be used as an argument to detect_faces function to show video with the rectangle
-# haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 
 def home():
@@ -85,35 +82,25 @@ def display_frame(frame, frame_placeholder):
     frame_placeholder.image(frame, channels="RGB")  # Display in the placeholder
 
 
-
 def record_audio(filename):
-    """ Record audio from the microphone and save to a file. """
-    p = pyaudio.PyAudio()
+    """Record audio from the microphone and save it to a file."""
+    # Configuration for recording
+    samplerate = 44100  # Sample rate
+    duration = 20  # Duration in seconds
+    channels = 1  # Mono audio
 
-    # Set up audio stream
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=44100,
-                    input=True,
-                    frames_per_buffer=1024)
-    
-    frames = []
-    for _ in range(0, int(44100 / 1024 * 20)):  # Record for 20 seconds (adjust as needed)
-        data = stream.read(1024)
-        frames.append(data)
-    
-    # Stop the stream and save the audio file
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-    
+    print("Recording...")
+    # Record audio
+    audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype='int16')
+    sd.wait()  # Wait until recording is finished
+    print("Recording finished.")
+
+    # Save the audio data to a WAV file
     with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(44100)
-        wf.writeframes(b''.join(frames))
-
-
+        wf.setnchannels(channels)
+        wf.setsampwidth(2)  # Sample width in bytes (int16 is 2 bytes)
+        wf.setframerate(samplerate)
+        wf.writeframes(audio_data.tobytes())
 
 def run_facecam():
     """

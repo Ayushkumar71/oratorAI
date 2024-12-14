@@ -9,3 +9,4 @@ numpy  # Essential for tensor and numerical operations
 SpeechRecognition
 pyaudio
 matplotlib
+sounddevice

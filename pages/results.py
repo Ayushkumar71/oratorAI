@@ -19,46 +19,96 @@ def results():
         st.error("Required files (audio and video) are missing. Please make sure the recording was done correctly.")
         return
 
-    # Add a button to trigger analysis
     if st.button("Run Analysis"):
         try:
-            # transcript = extract_transcript(audio_path) - Will be implemented in next push
-            analysis_results = extract_snapshots_for_sentiment(video_path)
-            audio_analysis = extract_audio_and_duration(audio_path)
-
-
-            # Video(visual) analysis
-            st.subheader("Sentiment Analysis on Face Snapshots")
+            # Transcript extraction (not implemented yet)
+            st.subheader("Step 1: Transcript Extraction")
+            try:
+                # Uncomment the line below when implemented
+                # transcript = extract_transcript(audio_path)
+                st.write("Transcript extraction not implemented yet.")
+            except Exception as e:
+                st.error(f"Error in transcript extraction: {str(e)}")
             
-            plot_stacked_area_chart(analysis_results)
-            st.markdown("""*Note: The blend of emotions shown is inferred from probability distributions 
-                        and may not reflect exact ground truth. Interpret results with caution.*""")
-            
+            # Sentiment analysis on video snapshots
+            st.subheader("Step 2: Sentiment Analysis on Face Snapshots")
+            try:
+                analysis_results = extract_snapshots_for_sentiment(video_path)
+                plot_stacked_area_chart(analysis_results)
+                st.markdown("""*Note: The blend of emotions shown is inferred from probability distributions 
+                                and may not reflect exact ground truth. Interpret results with caution.*""")
+            except Exception as e:
+                st.error(f"Error in sentiment analysis: {str(e)}")
 
+            # Audio analysis
+            st.subheader("Step 3: Audio Analysis")
+            try:
+                audio_analysis = extract_audio_and_duration(audio_path)
+                
+                # Extract filler words and WPM
+                filler_words_csv = ", ".join(audio_analysis["filler_word"])
+                wpm = audio_analysis['wpm']
 
-            # Audio Analysis
-            filler_words_csv = ", ".join(audio_analysis["filler_word"])
-            wpm = audio_analysis['wpm']
+                st.write(f"""Speech analysis: {wpm} words per minute. You 
+                        used {audio_analysis['filler_count']} filler words. Using: {filler_words_csv}""")
+                
+                # Conditional text based on WPM
+                if wpm < 60:
+                    st.write(f"Your speech might feel too slow; consider speaking a bit faster for better engagement.")
+                elif 60 <= wpm <= 110:
+                    st.write(f"This is a moderate pace, suitable for most audiences.")
+                elif 111 <= wpm <= 150:
+                    st.write(f"This is a slightly fast pace; it might work well for dynamic presentations.")
+                else:
+                    st.write(f"Your speech is very fast; consider slowing down to ensure clarity for your audience.")
+            except Exception as e:
+                st.error(f"Error in audio analysis: {str(e)}")
 
-            st.subheader("Speech Analysis")
+            # Success message
+            st.success("Wait for the results.. Then consider moving to the help page for helpful tips.")
 
-            # Common text 
-            st.write(f"""Speech analysis: {wpm} words per minute. You 
-                     used  {audio_analysis['filler_count']} filler words. Using : {filler_words_csv}""")
-            
-            # Conditional text based on wpm
-            if wpm < 60:
-                st.write(f"Your speech might feel too slow; consider speaking a bit faster for better engagement.")
-            elif 60 <= wpm <= 110:
-                st.write(f"This is a moderate pace, suitable for most audiences.")
-            elif 111 <= wpm <= 150:
-                st.write(f"This is a slightly fast pace; it might work well for dynamic presentations.")
-            else:
-                st.write(f"Your speech is very fast; consider slowing down to ensure clarity for your audience.")
-            
-            st.success("Move to help page for helpfull tips.")
         except Exception as e:
-            st.error(f"An error occurred while processing the data: {str(e)}")
+            st.error(f"An unexpected error occurred: {str(e)}")
+    # Add a button to trigger analysis
+    # if st.button("Run Analysis"):
+    #     try:
+    #         # transcript = extract_transcript(audio_path) - Will be implemented in next push
+    #         analysis_results = extract_snapshots_for_sentiment(video_path)
+    #         audio_analysis = extract_audio_and_duration(audio_path)
+
+
+    #         # Video(visual) analysis
+    #         st.subheader("Sentiment Analysis on Face Snapshots")
+            
+    #         plot_stacked_area_chart(analysis_results)
+    #         st.markdown("""*Note: The blend of emotions shown is inferred from probability distributions 
+    #                     and may not reflect exact ground truth. Interpret results with caution.*""")
+            
+
+
+    #         # Audio Analysis
+    #         filler_words_csv = ", ".join(audio_analysis["filler_word"])
+    #         wpm = audio_analysis['wpm']
+
+    #         st.subheader("Speech Analysis")
+
+    #         # Common text 
+    #         st.write(f"""Speech analysis: {wpm} words per minute. You 
+    #                  used  {audio_analysis['filler_count']} filler words. Using : {filler_words_csv}""")
+            
+    #         # Conditional text based on wpm
+    #         if wpm < 60:
+    #             st.write(f"Your speech might feel too slow; consider speaking a bit faster for better engagement.")
+    #         elif 60 <= wpm <= 110:
+    #             st.write(f"This is a moderate pace, suitable for most audiences.")
+    #         elif 111 <= wpm <= 150:
+    #             st.write(f"This is a slightly fast pace; it might work well for dynamic presentations.")
+    #         else:
+    #             st.write(f"Your speech is very fast; consider slowing down to ensure clarity for your audience.")
+            
+    #         st.success("Move to help page for helpfull tips.")
+    #     except Exception as e:
+    #         st.error(f"An error occurred while processing the data: {str(e)}")
 
 
 # Helper function - For plotting area chart
