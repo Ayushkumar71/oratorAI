@@ -1,5 +1,5 @@
 tensorflow
-opencv-python
+opencv-python-headless
 streamlit
 h5py
 onnxruntime  # If you plan to use ONNX
